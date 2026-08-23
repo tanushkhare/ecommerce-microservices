@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import store
+from backend.app.routers import ecommerce_router
+import uvicorn
 
 app = FastAPI(
-    title="E-Commerce Microservices Backend",
-    version="1.0.0",
-    description="Microservice backend for product inventory and order fulfillment."
+    title="E-Commerce Distributed Microservices Gateway",
+    description="Distributed saga orchestrator routing inventory, payment, and order state.",
+    version="1.0.0"
 )
 
 app.add_middleware(
@@ -16,8 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(store.router)
+app.include_router(ecommerce_router.router)
 
-@app.get("/")
-def read_root():
-    return {"message": "E-Commerce Microservices Backend is running!"}
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "ecommerce-microservices"}
+
+if __name__ == "__main__":
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

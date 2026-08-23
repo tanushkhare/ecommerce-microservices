@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Distributed Microservices Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">⚡ E-Commerce Distributed Microservices Portal</div>
+      <div class="badge">Live Microservice Active</div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Left Column: Order Ingestion & Checkout -->
+    <section class="panel-left">
+      <h2>Order Processing & Checkout Pipeline</h2>
+      <p class="subtitle">Distributed microservices orchestrating inventory verification, payment gateway simulation, and order fulfillment.</p>
+
+      <div class="input-group">
+        <label for="productSelect">Select Catalog Item</label>
+        <select id="productSelect" class="text-input">
+          <option value="PROD_101" data-name="Neural Edge Compute Node" data-price="499.00" selected>Neural Edge Compute Node - $499.00 (In Stock)</option>
+          <option value="PROD_102" data-name="FPGA Accelerator Board" data-price="899.00">FPGA Accelerator Board - $899.00 (In Stock)</option>
+          <option value="PROD_103" data-name="Low-Latency Sensor Gateway" data-price="249.00">Low-Latency Sensor Gateway - $249.00 (In Stock)</option>
+        </select>
+      </div>
+
+      <div class="metric-row">
+        <div style="flex: 1;">
+          <label style="font-size: 0.85rem; color: #94a3b8;">Quantity Units</label>
+          <input type="number" id="orderQty" class="text-input" value="2" min="1" max="50">
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 0.85rem; color: #94a3b8;">Customer / Account ID</label>
+          <input type="text" id="customerId" class="text-input" value="CUST_80419">
+        </div>
+      </div>
+
+      <button class="btn primary-btn" onclick="processOrder()">Dispatch Checkout & Order Pipeline</button>
+
+      <div class="log-card">
+        <h4>Distributed Saga Telemetry</h4>
+        <div id="logBox" class="terminal-log">Awaiting checkout transaction trigger...</div>
+      </div>
+    </section>
+
+    <!-- Right Column: Order State & Payment Diagnostics -->
+    <aside class="panel-right">
+      <h2>Microservices Transaction Verdict</h2>
+
+      <div class="metric-row">
+        <div class="metric-card">
+          <span class="label">Total Amount</span>
+          <span class="value" id="orderTotal">$998.00</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">Order Status</span>
+          <span class="value" id="orderStatus" style="color: #34d399;">PENDING</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Service Orchestration State</h3>
+        <p id="trackingLabel" style="font-size: 1.05rem; font-weight: 700; color: #38bdf8; margin: 0.4rem 0;">Awaiting Order Placement</p>
+        <small id="paymentStatus" style="color: #94a3b8;">Click button to trigger Inventory, Payment, and Order Gateway services.</small>
+      </div>
+
+      <div class="card">
+        <h3>Microservices Traces</h3>
+        <ul id="serviceTraces">
+          <li>Gateway: Ready (Port 8000)</li>
+          <li>Inventory Service: Standby</li>
+          <li>Payment Service: Standby</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    async function processOrder() {
+      const select = document.getElementById('productSelect');
+      const productId = select.value;
+      const selectedOption = select.options[select.selectedIndex];
+      const productName = selectedOption.getAttribute('data-name');
+      const unitPrice = parseFloat(selectedOption.getAttribute('data-price'));
+      const quantity = parseInt(document.getElementById('orderQty').value, 10);
+      const customerId = document.getElementById('customerId').value.trim();
+      const log = document.getElementById('logBox');
+
+      const totalAmount = unitPrice * quantity;
+      document.getElementById('orderTotal').innerText = `$${totalAmount.toFixed(2)}`;
+
+      log.innerText = `[${new Date().toLocaleTimeString()}] Dispatching order: ${quantity}x ${productName} ($${totalAmount.toFixed(2)})\n[${new Date().toLocaleTimeString()}] Calling Gateway POST: /api/v1/orders/checkout...`;
+
+      const payload = {
+        customer_id: customerId,
+        product_id: productId,
+        product_name: productName,
+        quantity: quantity,
+        unit_price: unitPrice
+      };
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/orders/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
+        const data = await res.json();
+        document.getElementById('orderStatus').innerText = data.status;
+        document.getElementById('orderStatus').style.color = "#34d399";
+        document.getElementById('trackingLabel').innerText = `Order Confirmed: ${data.order_id}`;
+        document.getElementById('paymentStatus').innerText = `Payment ID: ${data.payment_id} | Status: CAPTURED ($${data.total_price.toFixed(2)})`;
+
+        document.getElementById('serviceTraces').innerHTML = data.traces
+          .map(t => `<li><code>${t}</code></li>`).join('');
+
+        log.innerText += `\n[${new Date().toLocaleTimeString()}] 200 OK: Distributed transaction committed successfully!`;
+      } catch (err) {
+        log.innerText += `\n[${new Date().toLocaleTimeString()}] Note: Backend server offline (${err.message}). Running local client simulation.`;
+
+        const fakeOrderId = "ORD-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+        document.getElementById('orderStatus').innerText = "SUCCESS (SIM)";
+        document.getElementById('orderStatus').style.color = "#34d399";
+        document.getElementById('trackingLabel').innerText = `Order Confirmed: ${fakeOrderId}`;
+        document.getElementById('paymentStatus').innerText = `Payment Simulated: CAPTURED ($${totalAmount.toFixed(2)})`;
+
+        document.getElementById('serviceTraces').innerHTML = `
+          <li><code>[Inventory Service] Verified ${quantity}x in-stock</code></li>
+          <li><code>[Payment Service] Card charge authorized ($${totalAmount.toFixed(2)})</code></li>
+          <li><code>[Order Service] Dispatched to fulfillment queue</code></li>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
