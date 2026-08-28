@@ -1,11 +1,11 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.routers import ecommerce_router
 import uvicorn
 
 app = FastAPI(
-    title="E-Commerce Distributed Microservices Gateway",
-    description="Distributed saga orchestrator routing inventory, payment, and order state.",
+    title="E-Commerce Distributed Microservices API",
+    description="Concurrency-locked inventory checkout and decoupled ordering pipeline.",
     version="1.0.0"
 )
 
@@ -20,7 +20,7 @@ app.add_middleware(
 app.include_router(ecommerce_router.router)
 
 @app.get("/health")
-async def health():
+async def health_check():
     return {"status": "healthy", "service": "ecommerce-microservices"}
 
 if __name__ == "__main__":
