@@ -24,6 +24,7 @@ def test_successful_checkout():
     assert data["remaining_stock"] == 23
 
 def test_insufficient_stock_rejection():
-    payload = {"product_id": 102, "quantity": 999}
+    # Product 102 only has 10 in stock, requesting 15 should trigger a 400 Bad Request
+    payload = {"product_id": 102, "quantity": 15}
     res = client.post("/api/v1/orders/checkout", json=payload)
     assert res.status_code == 400
